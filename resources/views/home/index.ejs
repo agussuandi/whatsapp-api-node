@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whatsapp API</title>
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/qr-creator/dist/qr-creator.min.js"></script>
+</head>
+<body>
+    <section id="qr-code"></section>
+    <script>
+        document.addEventListener('DOMContentLoaded', event => {
+            const socket = io()
+
+            socket.on('CONNECTION_ID', msg => {
+                console.log(`your connection id ${msg}`)
+            })
+
+            socket.on('WHATSAPP_QR', msg => {
+                QrCreator.render({
+                    text: msg,
+                    // radius: 0.5, // 0.0 to 0.5
+                    // ecLevel: 'H', // L, M, Q, H
+                    fill: '#000', // foreground color
+                    background: '#FFF', // color or null for transparent
+                    // size: 128 // in pixels
+                }, document.querySelector('#qr-code'))
+            })
+
+            socket.on('WHATSAPP_READY', msg => {
+                console.log(msg)
+            })
+
+            socket.on('WHATSAPP_DISCONNECT', msg => {
+                console.log(msg)
+                location.reload()
+            })
+        })
+    </script>
+</body>
+</html>
