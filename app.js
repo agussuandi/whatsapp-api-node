@@ -15,7 +15,7 @@ app.get('/', HomeController.index)
 io.on('connection', socket => {
     socket.emit('CONNECTION_ID', socket.id)
 
-    const qrcode = require('qrcode-terminal')
+    // const qrcode = require('qrcode-terminal')
     const { Client, LocalAuth } = require('whatsapp-web.js')
 
     const client = new Client({
