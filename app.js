@@ -6,7 +6,7 @@ const io     = require('socket.io')(server)
 const path   = require('path')
 const fs     = require('fs')
 
-const { Client, LocalAuth } = require('whatsapp-web.js')
+const { Client, Location, LocalAuth } = require('whatsapp-web.js')
 
 app.set("view engine", "ejs")
 app.set("views", path.join(__dirname, "resources"))
@@ -51,6 +51,10 @@ const createSession = id => {
         }
         else if (msg.body === 'BILLING') {
             msg.reply('Mohon masukan nomor BILING')
+        } else if (msg.body === '!location') {
+            msg.reply(new Location(37.422, -122.084, 'Googleplex\nGoogle Headquarters'))
+        } else if (msg.location) {
+            msg.reply(msg.location)
         }
         else {
             msg.reply(`Keyword *${msg.body}* tidak diketahui`)
@@ -64,6 +68,15 @@ const createSession = id => {
             io.emit('WHATSAPP_MESSAGE_CREATE', msg)
         }
     })
+
+    client.on('message_revoke_everyone', async (after, before) => {
+        // Fired whenever a message is deleted by anyone (including you)
+        console.log(after) // message after it was deleted.
+        if (before) {
+            console.log(before) // message before it was deleted.
+        }
+    })
+
     client.on('disconnected', reason => {
         io.emit('WHATSAPP_DISCONNECT', `Client was logged out ${reason}`)
         console.log('Client was logged out', reason)
