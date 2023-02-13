@@ -38,6 +38,9 @@ io.on('connection', socket => {
         else if (msg.body === 'BILLING') {
             msg.reply('Mohon masukan nomor BILING')
         }
+        else {
+            msg.reply(`Keyword *${msg.body}* tidak diketahui`)
+        }
     })
 
     client.on('disconnected', reason => {
