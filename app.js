@@ -4,6 +4,9 @@ const app    = express()
 const server = require('http').createServer(app)
 const io     = require('socket.io')(server)
 const path   = require('path')
+const fs     = require('fs')
+
+const { Client, LocalAuth } = require('whatsapp-web.js')
 
 app.set("view engine", "ejs")
 app.set("views", path.join(__dirname, "resources"))
@@ -12,23 +15,34 @@ const HomeController = require('./app/http/controllers/HomeController')
 
 app.get('/', HomeController.index)
 
-io.on('connection', socket => {
-    socket.emit('CONNECTION_ID', socket.id)
-
-    // const qrcode = require('qrcode-terminal')
-    const { Client, LocalAuth } = require('whatsapp-web.js')
-
+const createSession = id => {
+    console.log(`Create session: ${id}`)
+    
     const client = new Client({
-        authStrategy: new LocalAuth()
+        restartOnAuthFail: true,
+        puppeteer: {
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu'
+            ],
+        },
+        authStrategy: new LocalAuth({
+            clientId: id
+        })
     })
 
     client.on('qr', qr => {
-        socket.emit('WHATSAPP_QR', qr)
-        // qrcode.generate(qr, {small: true})
+        io.emit('WHATSAPP_QR', qr)
     })
 
     client.on('ready', () => {
-        socket.emit('WHATSAPP_READY', 'Client is ready!')
+        io.emit('WHATSAPP_READY', 'Client is ready!')
     })
 
     client.on('message', msg => {
@@ -43,12 +57,47 @@ io.on('connection', socket => {
         }
     })
 
+    client.on('message_create', msg => {
+        // Fired on all message creations, including your own
+        if (!msg.fromMe) {
+            // do stuff here
+            io.emit('WHATSAPP_MESSAGE_CREATE', msg)
+        }
+    })
     client.on('disconnected', reason => {
-        socket.emit('WHATSAPP_DISCONNECT', `Client was logged out ${reason}`)
+        io.emit('WHATSAPP_DISCONNECT', `Client was logged out ${reason}`)
         console.log('Client was logged out', reason)
     })
 
     client.initialize()
+}
+
+const init = socket => {
+    const fullPath = path.join(__dirname, '.wwebjs_auth')
+    
+    if (socket) {
+        // createSession('ARTHURXAVIER')
+    } else {
+        fs.readdir(fullPath, (error, files) => {
+            if (error) console.log(error)
+            files.forEach(file => {
+                const identityId = 'AGUSSUANDI'
+                if (file === `session-${identityId}`) {
+                    createSession(identityId)
+                }
+            })
+        })
+    }
+}
+
+init()
+
+io.on('connection', socket => {
+    init(socket)
+    socket.emit('CONNECTION_ID', socket.id)
+    socket.on('CREATE_SESSION', data => {
+        createSession(data)
+    })
 })
 
 server.listen(3000, () => {

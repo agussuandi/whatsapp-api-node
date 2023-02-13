@@ -9,17 +9,28 @@
     <script defer src="https://cdn.jsdelivr.net/npm/qr-creator/dist/qr-creator.min.js"></script>
 </head>
 <body>
+    <input type="text" id="identityId" name="identityId" placeholder="Input your identity ID" />
+    <button type="button" id="submit-identity">Submit</button>
+    <br />
+    <hr />
+    <br />
     <section id="qr-code"></section>
     <script>
         document.addEventListener('DOMContentLoaded', event => {
             const socket = io()
+            let elQrCode = document.querySelector('#qr-code')
+            const elIdentity  = document.getElementById('identityId')
+            const elBtnSubmit = document.getElementById('submit-identity')
 
             socket.on('CONNECTION_ID', msg => {
                 console.log(`your connection id ${msg}`)
             })
 
+            elBtnSubmit.addEventListener("click", () => {
+                socket.emit('CREATE_SESSION', elIdentity.value)
+            })
+
             socket.on('WHATSAPP_QR', msg => {
-                let elQrCode = document.querySelector('#qr-code')
                 elQrCode.innerHTML = ''
                 QrCreator.render({
                     text: msg,
@@ -36,8 +47,11 @@
             })
 
             socket.on('WHATSAPP_DISCONNECT', msg => {
-                console.log(msg)
                 location.reload()
+            })
+
+            socket.on('WHATSAPP_MESSAGE_CREATE', data => {
+                console.log(data)
             })
         })
     </script>
