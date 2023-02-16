@@ -91,15 +91,17 @@ const init = socket => {
     if (socket) {
         // createSession('ARTHURXAVIER')
     } else {
-        fs.readdir(fullPath, (error, files) => {
-            if (error) console.log(error)
-            files.forEach(file => {
-                const identityId = 'AGUSSUANDI'
-                if (file === `session-${identityId}`) {
-                    createSession(identityId)
-                }
+        if (fs.existsSync(fullPath)) {
+            fs.readdir(fullPath, (error, files) => {
+                if (error) console.log(error)
+                files.forEach(file => {
+                    const identityId = 'AGUSSUANDI'
+                    if (file === `session-${identityId}`) {
+                        createSession(identityId)
+                    }
+                })
             })
-        })
+        }
     }
 }
 
